@@ -1,23 +1,23 @@
-A0:
-A1:
-A2:
-A3:
+A0: sensor0
+A1: sensor1
+A2: sensor2
+A3: sensor3
 A4:
 A5:
 
-0:
-1:
-2:
-~3:
-4:
-~5:
-~6:
-7:
+0: button0
+1: button1
+2: button3
+~3: led0
+4: button4
+~5: led1
+~6: led2
+7: motor
 
 8:
-~9:
-~10:
-~11:
+~9: led3
+~10: mp3 player 0
+~11: mp3 player 1
 12:
 13:
 
