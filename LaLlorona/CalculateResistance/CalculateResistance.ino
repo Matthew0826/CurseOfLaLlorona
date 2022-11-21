@@ -39,7 +39,7 @@ int* calculateDifferences( double resistance ){
         currResistance = 1 / ((1/(double)resistorValues[i]) + (1/(double)pieceValues[j]));
       }
  
-      double diffy = (resistorValues[1] - currResistance ) - difference;
+      double diffy = (resistorValues[i] - currResistance ) - difference;
       if( diffy <= 10 && diffy >= -10 ){
         x[0] = i;
         x[1] = j;
