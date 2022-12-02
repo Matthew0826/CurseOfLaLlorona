@@ -28,14 +28,18 @@ int currentTurn = 0;
 /*
 This method takes in a voltage and returns the resistance
 */
-const int resistorValue = 2000; 
+const int resistorValue = 2200; 
 int calculateResistance( int voltage ){
+
   return ( (resistorValue*1023.) / voltage ) - resistorValue;
 }
-const int baseResistance[6] = {5373, 5373, 5373, 5373, 5373, 320 };
+const int baseResistance[6] = {5353, 3316, 4877, 5373, 5373, 320 };
 
 void updateLine( int resistance, int line ){
   int difference = baseResistance[line] - resistance;
+
+   Serial.print( line );Serial.print(  ": "); Serial.print( resistance ); Serial.print( ", " ); Serial.println( difference );
+
   for( int i = 0; i < 4; i++ ){
     if( pieces[i][0] == line ){
       difference -= resistorValues[pieces[i][1]];
@@ -71,6 +75,8 @@ void updateLine( int resistance, int line ){
 
 void setup() {
   // put your setup code here, to run once:
+    Serial.begin(9600);
+Serial.println( "TEST" );
   for( int i = 0; i < sizeof(sensors); i++ ){
     pinMode(sensors[i], INPUT); 
   }
@@ -81,16 +87,22 @@ void setup() {
   //Code for first turns here
 
  // Init USB serial port for debugging
-  Serial.begin(9600);
   // Init serial port for DFPlayer Mini
   softwareSerial.begin(9600);
- // Set volume to maximum (0 to 30).
+ if (player.begin(softwareSerial)) {
+   Serial.println("OK");
+
+    // Set volume to maximum (0 to 30).
     player.volume(30);
     // Play the first MP3 file on the SD card
     player.play(1);
+  } else {
+    Serial.println("Connecting to DFPlayer Mini failed!");
+  }
 }
 
 void loop() {
+  
   //First we need to calculate our resistances to determine where the pieces are.
   //We will do this because we know where all but one piece is
 
@@ -120,11 +132,12 @@ void loop() {
   player.volume(minDistance / 50);
     
     // Play the first MP3 file on the SD card - save mp3 file as 0001.mp3 for program to read it   
-  player.play(1);
+  //player.play(1);
 
   //Then, we need to calculate the distance to La Llorona.
   //Finally, we need to modify all of the values
   //We need checks here to see if anyone died :(
+    
 }
 
 

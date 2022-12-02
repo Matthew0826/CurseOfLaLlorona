@@ -5,7 +5,7 @@
  
  
 // give names to the pins we use and create variables for room and LED brightness 
-const int sensorPin = A1; 
+const int sensorPin = A2; 
 const int ledPin = 9; 
  double roomBrightness; 
  int ledBrightness; 
@@ -26,20 +26,19 @@ void setup()
 int* calculateDifferences( double resistance ){
   double difference = 5373 - resistance;
   static int x[2];
-  Serial.println(difference  );
 
 
   for( int i = 0; i < 8; i++ ){
     for( int j = 0; j < 4; j++ ){
       double currResistance;
       if( pieceValues[j] == 0 ){
-        currResistance = resistorValues[i];
+        currResistance = 0;
       }else{
         currResistance = 1 / ((1/(double)resistorValues[i]) + (1/(double)pieceValues[j]));
       }
  
       double diffy = ( (double)resistorValues[i] - currResistance ) - difference;
-      if( diffy <= 6 && diffy >= -6 ){
+      if( diffy <= 10 && diffy >= -10 ){
         x[0] = i;
         x[1] = j;
 
@@ -47,8 +46,8 @@ int* calculateDifferences( double resistance ){
       }
     }
   }
-  x[0] = 3;
-  x[1] = 0;
+  x[0] = -1;
+  x[1] = -1;
   return x;
 }
  
@@ -70,14 +69,13 @@ void loop()
   // but in practice from about 100->900, into a value to send to analogWrite. 
   // Remember analogWrite uses values from 255->0 (note the reversed range) 
   ledBrightness = 255 - ((roomBrightness - 100) / 3.5); 
-  resistance = ( (2000*1025.) / roomBrightness ) - 2000;
+  resistance = ( (2200*1023.) / roomBrightness ) - 2200;
+  Serial.println( roomBrightness );
+  Serial.print( "R = " );
+  double x = ( (2200*1023.) / roomBrightness );
   Serial.println( resistance );
-  int* ptr = calculateDifferences( resistance );
-  Serial.print( "Piece: " );
-  Serial.println( ptr[1] );
-  Serial.print( "Space: " );
-  Serial.println( ptr[0] );
 
+  int* ptr = calculateDifferences( resistance );
 
   // output this new brightness level to the LED 
   analogWrite(ledPin, ledBrightness) ; 
