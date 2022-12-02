@@ -1,0 +1,11 @@
+/buttons
+const int buttonGreen = 2;
+const int buttonBlue = 3;
+const int buttonRed = 4;
+const int buttonYellow = 5;
+
+//leds
+const int ledGreen = 6;
+const int ledBlue = 7;
+const int ledRed = 8;
+const int ledYellow = 9;
