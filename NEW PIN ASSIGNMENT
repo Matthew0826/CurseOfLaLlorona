@@ -1,3 +1,11 @@
+//SPEAKER
+include "SoftwareSerial.h"
+#include "DFRobotDFPlayerMini.h"
+SoftwareSerial mySoftwareSerial(10, 11); // RX, TX - pins 
+// Creating the speaker object
+DFRobotDFPlayerMini speaker;
+
+
 /buttons
 const int buttonGreen = 2;
 const int buttonBlue = 3;
