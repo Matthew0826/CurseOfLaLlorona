@@ -2,8 +2,8 @@
 #include "DFRobotDFPlayerMini.h"
 
 // Use pins 2 and 3 to communicate with DFPlayer Mini
-static const uint8_t PIN_MP3_TX = 11; // Connects to module's RX 
-static const uint8_t PIN_MP3_RX = 10; // Connects to module's TX 
+static const uint8_t PIN_MP3_TX = 10; // Connects to module's RX 
+static const uint8_t PIN_MP3_RX = 11; // Connects to module's TX 
 SoftwareSerial softwareSerial(PIN_MP3_RX, PIN_MP3_TX);
 
 // Create the Player object
@@ -23,11 +23,12 @@ void setup() {
     // Set volume to maximum (0 to 30).
     player.volume(30);
     // Play the first MP3 file on the SD card
-    player.play(1);
+    player.loop(1);
   } else {
     Serial.println("Connecting to DFPlayer Mini failed!");
   }
 }
 
 void loop() {
+  
 }
