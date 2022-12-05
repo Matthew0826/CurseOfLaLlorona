@@ -1,56 +1,92 @@
 // Rotary Encoder Inputs
- #define inputSW A3
- #define inputCLK A4
- #define inputDT A5
+ #define inputSW 2
+ #define inputCLK 4
+ #define inputDT 7
  #include <LiquidCrystal.h>
+ #include "Arduino.h"
+#include "SoftwareSerial.h"
+#include "DFRobotDFPlayerMini.h"
 
-#define numbPieces 2
+#define numbPieces 4
 
  #define moveConst 3
  
- const int ledPins[numbPieces] = { 6, 10 };
+ // Use pins 2 and 3 to communicate with DFPlayer Mini
+static const uint8_t PIN_MP3_TX = 12; // Connects to module's RX 
+static const uint8_t PIN_MP3_RX = 13; // Connects to module's TX 
+SoftwareSerial softwareSerial(PIN_MP3_RX, PIN_MP3_TX);
+// Create the Player object
+DFRobotDFPlayerMini player;
+
+ //Player 1: Yellow- 3, 10
+ //Player 2: Red- 5
+  //Player 3: Blue
+  //Player 4: Green
+ const int ledPins[numbPieces] = { 3, 5, 6, 9 };
  int counter = 0; 
  int currentStateCLK;
  int previousStateCLK;
  double lastMillis = 0;
 
- int ids[numbPieces][2] = {{0, 0}, {0, 0}};
- int prevIds[numbPieces][2] = {{0, 0}, {0, 0}};
+ bool usedCard = false;
+ bool breakout = false;
+
+
+ int ids[numbPieces][2] = {{0, 0}, {0, 0}, {0, 0}, {0, 0}};
+ int prevIds[numbPieces][2] = {{0, 0}, {0, 0}, {0, 0}, {0, 0}};
  bool modCol = true;
  
  String currentDir ="";
  unsigned long lastButtonPress = 0;
- LiquidCrystal lcd(A0, A1, 5, 4, 3, 2);
+ LiquidCrystal lcd(A0, A1, A2, A3, A4, A5);
 
 double laLlorona[2] = {0, 0};
 
- const int rowSize[6] = {10, 8, 7, 8, 4};
+ const int rowSize[6] = {11, 8, 7, 8, 5};
  const char rows[6] = {'A', 'B', 'C', 'D', 'E' };
- const char buttons[numbPieces] = {8, 9};
- bool alive[numbPieces] = {true, true};
-const String buttonString[numbPieces] = {"Green", "Blue"};
+ const char buttons[numbPieces] = {1, 8, 10, 11};
+ bool alive[numbPieces] = {true, true, true, true};
+const String buttonString[numbPieces] = {"Yellow", "Red", "Blue", "Green"};
 
 int currentButton = 0;
 
-const double coords[6][11][2] = {{{0.5, 1.5}, {0.5, 2.5}, {0.5, 3.5}, {0.5, 4.5}, {0.5, 5.5}, {0.5, 6.5}, {0.75, 7.5}, {1.75, 7.5}, {2.35, 6.2 }, {2.85, 5}, {3.85,5.3 } },
+SoftwareSerial mySoftwareSerial(10, 11); // RX, TX
+DFRobotDFPlayerMini myDFPlayer;
+
+const double coords[6][12][2] = {{{0, 0}, {0.5, 1.5}, {0.5, 2.5}, {0.5, 3.5}, {0.5, 4.5}, {0.5, 5.5}, {0.5, 6.5}, {0.75, 7.5}, {1.75, 7.5}, {2.35, 6.2 }, {2.85, 5}, {3.85,5.3 } },
 {{1.25, 1.25}, {2.25, 2.25}, {3.25, 3.25}, {3.75, 4}, {4.5, 4.5}, {5.5, 4.25}, {6.5, 4}, {7.5, 3.5}, {8.5, 3.25} },
 {{1.75, 0.5}, {3, 0.5}, {4.5, 0.5}, {5.5, 0.75}, {6.5, 0.75}, {7.5, 0.75}, {8.5, 0.75}, {8.5, 2} },
 {{2.75, 8}, {3.75, 8.25}, {4.65, 8.65}, {5.38, 9.25 }, {6.25, 8}, {7,7 }, {7.25, 6}, {6.37, 6.65}, {5.5, 5.25}  },
-{{8.5, 4.5}, {8.5, 5.5}, {8.5, 6.5}, {8.75,7.25 },{9, 8.25}}};
+{{8.5, 4.5}, {8.5, 5.5}, {8.5, 6.5}, {8.75,7.25 },{9, 8.25}, {9.5, 9.5}}};
 
  String encdir ="";
 void updateLights(){
+  double minDistance = 1000;
    for( int i = 0; i < numbPieces; i++ ){
+     if( !alive[i] ){
+       continue;
+     }
      int a = laLlorona[0] - coords[ids[i][1]][ids[i][0]][0];
       int b = laLlorona[1] - coords[ids[i][1]][ids[i][0]][1];
       
       double distance = pow( a, 2) + pow( b, 2);
-      Serial.print( i ); Serial.print( ": ");
-      Serial.println( sqrt( distance ) );
       distance = sqrt( distance );
+      if( distance < minDistance ){
+        minDistance = distance;
+      }
       int brightness = 0;
       if( distance <= 1.25 ){
-        Serial.print( "PLAYER "); Serial.println( i );
+        breakout = true;
+        lcd.clear();
+        lcd.print( buttonString[i] );
+        lcd.print( " is Dead!" );
+        lcd.setCursor( 0, 1 );
+        lcd.print( "Used Card? " );
+        if( usedCard ){
+          lcd.print( "Y" );
+        }else{
+          lcd.print( "N" );
+        }
         brightness = 0;
         alive[i] = false;
       }else if( distance <= 2.5 ){
@@ -67,8 +103,10 @@ void updateLights(){
       }
       analogWrite(ledPins[i], brightness);
    }
+   player.volume( (int)(( 2 / minDistance ) * 30) );
  }
  void setup() { 
+
    laLlorona[0] = random(7, 8);
    laLlorona[1] = random(7, 8 );
    lcd.begin(16, 2);
@@ -79,13 +117,42 @@ void updateLights(){
    pinMode(inputSW, INPUT_PULLUP);
    pinMode( buttons[0], INPUT_PULLUP );
     pinMode( buttons[1], INPUT_PULLUP );
+    pinMode( buttons[2], INPUT_PULLUP );
+    pinMode( buttons[3], INPUT_PULLUP );
 
    // Set LED pins as outputs
    pinMode (ledPins[0],OUTPUT);
    pinMode (ledPins[1],OUTPUT);
+  pinMode (ledPins[2],OUTPUT);
+
+   pinMode (ledPins[3],OUTPUT);
+
    
    // Setup Serial Monitor
-   Serial.begin(9600);
+   //Serial.begin(9600);
+     softwareSerial.begin(9600);
+// Start communication with DFPlayer Mini
+  if (player.begin(softwareSerial)) {
+   Serial.println("OK");
+
+    // Set volume to maximum (0 to 30).
+    // Play the first MP3 file on the SD card
+        player.volume(5);
+
+    player.loop(1);
+  } else {
+    Serial.println("Connecting to DFPlayer Mini failed!");
+  }
+/*
+    mySoftwareSerial.begin(9600);
+    if( !myDFPlayer.begin(mySoftwareSerial) ){
+      Serial.println( "DF PLAYER FAILED" );
+    }else{
+      Serial.println( "DF PLAYER OK" );      
+    }
+    */
+    //myDFPlayer.volume(15);  //Set volume value. From 0 to 30
+    //myDFPlayer.play(1);  //Play the first mp3
    // Read the initial state of inputCLK
    // Assign to previousStateCLK variable
    previousStateCLK = digitalRead(inputCLK);
@@ -109,15 +176,13 @@ void updateLights(){
     pow( coords[ids[i][1]][ids[i][0]][1] - coords[prevIds[i][1]][prevIds[i][0]][1], 2);
     noise = sqrt( noise );
 
-    int xMultiplier = 1;
-    int yMultiplier = 1;
 
     int a = laLlorona[0] - coords[ids[i][1]][ids[i][0]][0];
     int b = laLlorona[1] - coords[ids[i][1]][ids[i][0]][1];
 
     double distance = pow( a, 2) + pow( b, 2);
-    dx -= ( ( a * noise ) / distance );
-    dy -= ( ( b * noise ) / distance );
+    dx -= ( ( a * noise ) / distance ) * 1.5;
+    dy -= ( ( b * noise ) / distance ) * 1.5;
 
   }
 
@@ -149,6 +214,7 @@ void updateLights(){
   // Read the current state of inputCLK
    currentStateCLK = digitalRead(inputCLK);
     if( digitalRead( buttons[currentButton]) == LOW ){
+      Serial.println( "PRESSED!" );
       int startingButton = currentButton;
       currentButton++;
       if( currentButton >= numbPieces ){
@@ -162,7 +228,7 @@ void updateLights(){
         if( currentButton >= numbPieces ){
           currentButton = 0;
         }
-        if( currentButton = startingButton ){
+        if( currentButton == startingButton ){
           //Add some quirky everyone loses code :D
           break;
         }
@@ -173,7 +239,6 @@ void updateLights(){
     }
    // If the previous and the current state of the inputCLK are different then a pulse has occured
    if (currentStateCLK != previousStateCLK){ 
-       
      // If the inputDT state is different than the inputCLK state then 
      // the encoder is rotating counterclockwise
      if (digitalRead(inputDT) != currentStateCLK) { 
@@ -204,9 +269,12 @@ void updateLights(){
 
   //If we detect LOW signal, button is pressed
     if (btnState == LOW) {
+      if( breakout ){
+       breakout = false;
+     }
     //since 50ms have passed since last LOW pulse, it means that the
     //button has been pressed, released and pressed again
-    if (millis() - lastButtonPress > 50) {
+    else if (millis() - lastButtonPress > 50) {
       modCol = !modCol;
     }
 
@@ -217,7 +285,7 @@ void updateLights(){
   // Put in a slight delay to help debounce the reading
   
   //This updates regularly & is our main code body
-  if( ((double)millis() / 1000 ) - lastMillis > 0.25 ){
+  if( ((double)millis() / 1000 ) - lastMillis > 0.1 && !breakout ){
     checkCounter();
     lcd.clear();
     lcd.setCursor(0, 0);
