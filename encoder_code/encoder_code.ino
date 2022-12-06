@@ -1,11 +1,16 @@
-// Rotary Encoder Inputs
+//Include all the libraries required  for the LCD & for the Arduino
+#include <LiquidCrystal.h>
+#include "Arduino.h"
+#include "SoftwareSerial.h"
+#include "DFRobotDFPlayerMini.h"
+
+// These are the inputs for the rotary encoder
  #define inputSW 2
  #define inputCLK 4
  #define inputDT 7
- #include <LiquidCrystal.h>
- #include "Arduino.h"
-#include "SoftwareSerial.h"
-#include "DFRobotDFPlayerMini.h"
+
+
+
 
 #define numbPieces 4
 
