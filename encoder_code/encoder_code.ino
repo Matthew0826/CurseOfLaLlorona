@@ -137,7 +137,7 @@ void updateLights(){
 
     // Set volume to maximum (0 to 30).
     // Play the first MP3 file on the SD card
-        player.volume(5);
+    player.volume(5);
 
     player.loop(1);
   } else {
